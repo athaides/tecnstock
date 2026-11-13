@@ -1,19 +1,36 @@
 async function login() {
-  const codigo = document.getElementById("codigo").value;
+  const codigo = document.getElementById("codigo").value.trim();
   const senha = document.getElementById("senha").value;
+  const erro = document.getElementById("erro");
+  erro.innerText = "";
 
-  const res = await fetch("http://localhost:8080/api/usuarios/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ codigo, senha })
-  });
+  if (!codigo || !senha) {
+    erro.innerText = "Preencha usuário e senha";
+    return;
+  }
 
-  const data = await res.json();
+  try {
+    const res = await fetch("/api/usuarios/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codigo, senha })
+    });
 
-  if (data.codigo) {
-    localStorage.setItem("usuario", JSON.stringify(data));
-    window.location.href = "dashboard.html";
-  } else {
-    document.getElementById("erro").innerText = data.erro;
+    const data = await res.json();
+
+    if (data.codigo) {
+      localStorage.setItem("usuario", JSON.stringify(data));
+      window.location.href = "dashboard.html";
+    } else {
+      erro.innerText = data.erro || "Usuário ou senha inválidos";
+    }
+  } catch (e) {
+    erro.innerText = "Não foi possível conectar ao servidor. Tente de novo.";
   }
 }
+
+document.querySelectorAll("#codigo, #senha").forEach(campo => {
+  campo.addEventListener("keydown", e => {
+    if (e.key === "Enter") login();
+  });
+});
